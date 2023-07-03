@@ -1,14 +1,15 @@
 export default {
-  feedback: {
-    succes: 'RSS успешно загружен',
+  translation: {
+    loadSuccess: 'RSS успешно загружен',
+    feeds: 'Фиды',
+    posts: 'Посты',
+    view: 'Просмотр',
     errors: {
       invalidUrl: 'Ссылка должна быть валидным URL',
-      existingRss: 'RSS уже существует',
-      noRss: 'Ресурс не содержит валидный RSS',
+      alreadyExists: 'RSS уже существует',
+      required: 'Поле не должно быть пустым',
+      parseError: 'Ресурс не содержит валидный RSS',
       networkError: 'Ошибка сети',
-    },
-    buttons: {
-      viewPost: 'Просмотр',
     },
   },
 };
