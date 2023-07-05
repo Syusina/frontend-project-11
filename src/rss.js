@@ -44,4 +44,3 @@ export default (url) => {
       throw err.message === 'Network Error' ? new Error('networkError') : err;
     });
 };
-
