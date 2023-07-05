@@ -1,15 +1,15 @@
 export default {
   translation: {
-    loadSuccess: 'RSS successfully loaded',
-    feeds: 'Feeds',
-    posts: 'Posts',
-    view: 'View',
+    success: 'RSS has been loaded',
     errors: {
-      invalidUrl: 'Link must be a valid URL',
       alreadyExists: 'RSS already exists',
-      required: 'Field must not be empty',
-      parseError: 'URL contains no valid RSS',
+      required: 'Must not be empty',
+      invalidUrl: 'Must be a valid URL',
+      parseError: 'Source contains invalid RSS',
       networkError: 'Network error',
     },
+    view: 'View',
+    posts: 'Posts',
+    feeds: 'Feeds',
   },
 };

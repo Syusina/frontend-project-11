@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import i18next from 'i18next';
 import * as yup from 'yup';
-import watch from './view.js';
+import render from './view.js';
 import resources from './locales/index.js';
 import getRss, { processFeed, processPosts } from './rss.js';
 
@@ -36,7 +36,7 @@ const processRss = (data, state) => {
   state.urls.push(url);
   state.feeds.push(feed);
   state.posts.push(...posts);
-  state.feedback.message = i18next.t('loadSuccess');
+  state.feedback.message = i18next.t('success');
 };
 
 const updateRss = (state, time) => {
@@ -68,7 +68,6 @@ const elements = {
 };
 
 const initState = {
-  rssLoaded: false,
   form: {
     valid: true,
     submitted: false,
@@ -84,19 +83,19 @@ const initState = {
   posts: [],
   feeds: [],
   urls: [],
+  rssLoaded: false,
 };
 
 export default () => {
   const defaultLang = 'ru';
   const delay = 5000;
-  i18next
-    .init({
-      debug: false,
-      lng: defaultLang,
-      resources,
-    })
+  i18next.init({
+    lng: defaultLang,
+    debug: false,
+    resources,
+  })
     .then(() => {
-      const watchedState = watch(elements, i18next, initState);
+      const watchedState = render(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         watchedState.feedback.message = '';

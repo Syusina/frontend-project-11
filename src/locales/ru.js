@@ -1,15 +1,15 @@
 export default {
   translation: {
-    loadSuccess: 'RSS успешно загружен',
-    feeds: 'Фиды',
-    posts: 'Посты',
-    view: 'Просмотр',
+    success: 'RSS успешно загружен',
     errors: {
-      invalidUrl: 'Ссылка должна быть валидным URL',
       alreadyExists: 'RSS уже существует',
-      required: 'Поле не должно быть пустым',
+      required: 'Не должно быть пустым',
+      invalidUrl: 'Ссылка должна быть валидным URL',
       parseError: 'Ресурс не содержит валидный RSS',
       networkError: 'Ошибка сети',
     },
+    view: 'Просмотр',
+    posts: 'Посты',
+    feeds: 'Фиды',
   },
 };
