@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import i18next from 'i18next';
 import * as yup from 'yup';
-import render from './view.js';
+import renderView from './view.js';
 import resources from './locales/index.js';
 import getRss, { processFeed, processPosts } from './rss.js';
 
@@ -95,7 +95,7 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = render(elements, i18next, initState);
+      const watchedState = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         watchedState.feedback.message = '';
