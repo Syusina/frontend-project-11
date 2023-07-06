@@ -95,42 +95,42 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = renderView(elements, i18next, initState);
+      const utils = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        watchedState.feedback.message = '';
+        utils.feedback.message = '';
         const formData = new FormData(e.target);
         const url = formData.get('url');
-        validator(url, watchedState.urls, watchedState)
+        validator(url, utils.urls, utils)
           .then((validatedUrl) => {
-            watchedState.form.valid = true;
-            watchedState.feedback.valid = true;
-            watchedState.form.submitted = true;
+            utils.form.valid = true;
+            utils.feedback.valid = true;
+            utils.form.submitted = true;
             return validatedUrl;
           })
           .then((validatedUrl) => getRss(validatedUrl))
-          .then((data) => processRss(data, watchedState))
+          .then((data) => processRss(data, utils))
           .catch((err) => {
             const { message } = err;
-            watchedState.feedback.valid = false;
-            watchedState.form.valid = false;
+            utils.feedback.valid = false;
+            utils.form.valid = false;
             if (message === 'parseError' || message === 'networkError') {
-              watchedState.feedback.message = i18next.t(`errors.${message}`);
+              utils.feedback.message = i18next.t(`errors.${message}`);
             } else {
-              watchedState.feedback.message = message;
+              utils.feedback.message = message;
             }
           });
       });
 
       elements.posts.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-          watchedState.uiState.activeModal = e.target.dataset.id;
-          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
+          utils.uiState.activeModal = e.target.dataset.id;
+          utils.uiState.viewedPosts.push(e.target.dataset.id);
         }
         if (e.target.tagName === 'A') {
-          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
+          utils.uiState.viewedPosts.push(e.target.dataset.id);
         }
       });
-      updateRss(watchedState, delay);
+      updateRss(utils, delay);
     });
 };

@@ -114,29 +114,29 @@ export default (elements, i18n, initialState) => {
     }
   };
 
-  const state = onChange(initialState, (path) => {
+  const watchedState = onChange(initialState, (path) => {
     switch (path) {
       case 'form.valid':
       case 'form.submitted':
-        renderForm(state);
+        renderForm(watchedState);
         break;
       case 'feedback.message':
-        renderFeedback(state);
+        renderFeedback(watchedState);
         break;
       case 'feeds':
-        renderContainer(state, 'feeds');
+        renderContainer(watchedState, 'feeds');
         break;
       case 'uiState.viewedPosts':
       case 'posts':
-        renderContainer(state, 'posts');
+        renderContainer(watchedState, 'posts');
         break;
       case 'uiState.activeModal':
-        renderModal(state);
+        renderModal(watchedState);
         break;
       default:
         break;
     }
   });
 
-  return state;
+  return watchedState;
 };
