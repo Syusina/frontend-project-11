@@ -1,9 +1,10 @@
 /* eslint-disable no-param-reassign */
 import i18next from 'i18next';
 import * as yup from 'yup';
+import axios from 'axios';
 import renderView from './view.js';
 import resources from './locales/index.js';
-import getRss, { processFeed, processPosts } from './rss.js';
+import parser from './rss.js';
 
 const validator = (url, urls, state) => {
   yup.setLocale({
@@ -55,6 +56,46 @@ const updateRss = (state, time) => {
     });
     updateRss(state, time);
   }, time);
+};
+
+const processPosts = (xml) => {
+  const posts = [];
+  const items = xml.querySelectorAll('item');
+  [...items].map((item) => {
+    const title = item.querySelector('title').textContent;
+    const description = item.querySelector('description').textContent;
+    const link = item.querySelector('link').textContent;
+    const id = _.uniqueId();
+    posts.push({
+      title, description, link, id,
+    });
+  });
+  return posts;
+};
+
+const processFeed = (xml) => {
+  const feed = xml.querySelector('channel');
+  const title = feed.querySelector('title').textContent;
+  const description = feed.querySelector('description').textContent;
+  return { title, description };
+};
+
+const proxyRequest = (url) => {
+  const proxyData = new URL('get', 'https://allorigins.hexlet.app');
+  proxyData.searchParams.set('disableCache', true);
+  proxyData.searchParams.set('url', url);
+  return proxyData;
+};
+
+const getRss = (url) => {
+  const proxyUrl = proxyRequest(url);
+  return axios
+    .get(proxyUrl)
+    .then((response) => response.data)
+    .then((data) => ({ url, rss: parser(data.contents) }))
+    .catch((err) => {
+      throw err.message === 'Network Error' ? new Error('networkError') : err;
+    });
 };
 
 const elements = {
