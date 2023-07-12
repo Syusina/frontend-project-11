@@ -2,75 +2,18 @@
 import i18next from 'i18next';
 import * as yup from 'yup';
 import axios from 'axios';
+import _ from 'lodash';
 import renderView from './view.js';
 import resources from './locales/index.js';
-import parser from './rss.js';
+import parser from './parser.js';
 
-const validator = (url, urls, state) => {
-  yup.setLocale({
-    string: {
-      url: () => i18next.t('errors.invalidUrl'),
-    },
-    mixed: {
-      notOneOf: () => i18next.t('errors.alreadyExists'),
-      required: () => i18next.t('errors.required'),
-    },
-  });
+const validate = (url, urls) => {
   const schema = yup.string()
     .trim()
     .url()
     .notOneOf(urls)
     .required();
-  try {
-    return schema.validate(url, { abortEarly: false });
-  } catch (err) {
-    state.feedback.message = err.message;
-  }
-  return null;
-};
-
-const processRss = (data, state) => {
-  const { url, rss } = data;
-  const feed = processFeed(rss);
-  const posts = processPosts(rss);
-  state.rssLoaded = true;
-  state.urls.push(url);
-  state.feeds.push(feed);
-  state.posts.push(...posts);
-  state.feedback.message = i18next.t('success');
-};
-
-const updateRss = (state, time) => {
-  setTimeout(() => {
-    const { urls } = state;
-    const newRss = urls.map(getRss);
-    const oldPosts = state.posts;
-    Promise.all(newRss).then((item) => {
-      const newPosts = item.map(({ rss }) => processPosts(rss));
-      const uniquePosts = newPosts
-        .flat()
-        .filter((newPost) => !oldPosts.some((oldPost) => oldPost.id === newPost.id));
-      if (uniquePosts.length > 0) {
-        state.posts = [...uniquePosts, ...state.posts];
-      }
-    });
-    updateRss(state, time);
-  }, time);
-};
-
-const processPosts = (xml) => {
-  const posts = [];
-  const items = xml.querySelectorAll('item');
-  [...items].map((item) => {
-    const title = item.querySelector('title').textContent;
-    const description = item.querySelector('description').textContent;
-    const link = item.querySelector('link').textContent;
-    const id = _.uniqueId();
-    posts.push({
-      title, description, link, id,
-    });
-  });
-  return posts;
+  return schema.validate(url, { abortEarly: false });
 };
 
 const processFeed = (xml) => {
@@ -80,8 +23,22 @@ const processFeed = (xml) => {
   return { title, description };
 };
 
+const processPosts = (xml) => {
+  const posts = [...xml.querySelectorAll('item')]
+    .map((item) => {
+      const title = item.querySelector('title').textContent;
+      const description = item.querySelector('description').textContent;
+      const link = item.querySelector('link').textContent;
+      const id = _.uniqueId();
+      return {
+        title, description, link, id,
+      };
+    });
+  return posts;
+};
+
 const proxyRequest = (url) => {
-  const proxyData = new URL('get', 'https://allorigins.hexlet.app');
+  const proxyData = new URL('https://allorigins.hexlet.app/get?');
   proxyData.searchParams.set('disableCache', true);
   proxyData.searchParams.set('url', url);
   return proxyData;
@@ -98,6 +55,33 @@ const getRss = (url) => {
     });
 };
 
+const processRss = (data, state) => {
+  const { url, rss } = data;
+  const feed = processFeed(rss);
+  const posts = processPosts(rss);
+  state.rssLoaded = true;
+  state.urls.push(url);
+  state.feeds.push(feed);
+  state.posts.push(...posts);
+  state.feedback.message = i18next.t('success');
+};
+
+const updateRss = (state, time) => {
+  const { urls } = state;
+  const rssLinks = urls.map(getRss);
+  const oldPosts = state.posts;
+  Promise.all(rssLinks).then((items) => {
+    const newPosts = items.map(({ rss }) => processPosts(rss));
+    const uniquePosts = newPosts
+      .flat()
+      .filter((newPost) => !oldPosts.some((oldPost) => oldPost.id === newPost.id));
+    if (uniquePosts.length > 0) {
+      state.posts.push(...uniquePosts);
+    }
+  });
+  setTimeout((updateRss, time, state, time));
+};
+
 const elements = {
   form: document.querySelector('.rss-form'),
   submit: document.querySelector('button[type="submit"]'),
@@ -109,6 +93,9 @@ const elements = {
 };
 
 const initState = {
+  process: {
+    status: 'idle',
+  },
   form: {
     valid: true,
     submitted: false,
@@ -128,6 +115,16 @@ const initState = {
 };
 
 export default () => {
+  yup.setLocale({
+    string: {
+      url: () => i18next.t('errors.invalidUrl'),
+    },
+    mixed: {
+      notOneOf: () => i18next.t('errors.alreadyExists'),
+      required: () => i18next.t('errors.required'),
+    },
+  });
+
   const defaultLang = 'ru';
   const delay = 5000;
   i18next.init({
@@ -139,10 +136,11 @@ export default () => {
       const utils = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
+        utils.process.status = 'sending';
         utils.feedback.message = '';
         const formData = new FormData(e.target);
         const url = formData.get('url');
-        validator(url, utils.urls, utils)
+        validate(url, utils.urls, utils)
           .then((validatedUrl) => {
             utils.form.valid = true;
             utils.feedback.valid = true;
@@ -150,9 +148,13 @@ export default () => {
             return validatedUrl;
           })
           .then((validatedUrl) => getRss(validatedUrl))
-          .then((data) => processRss(data, utils))
+          .then((data) => {
+            processRss(data, utils);
+            utils.process.status = 'filling';
+          })
           .catch((err) => {
             const { message } = err;
+            utils.process.status = 'failed';
             utils.feedback.valid = false;
             utils.form.valid = false;
             if (message === 'parseError' || message === 'networkError') {

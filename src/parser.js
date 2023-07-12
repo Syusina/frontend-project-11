@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export default (contents) => {
   const pars = new DOMParser();
   const xml = pars.parseFromString(contents, 'text/xml');
@@ -9,4 +7,3 @@ export default (contents) => {
   }
   return xml;
 };
-
