@@ -44,16 +44,12 @@ const proxyRequest = (url) => {
   return request.toString();
 };
 
-const getRss = (request) => {
-  const url = proxyRequest(request);
-  return axios
-    .get(url)
-    .then((response) => response.data)
-    .then((data) => ({ request, rss: parser(data.contents) }))
-    .catch((err) => {
-      throw err.message === 'Network Error' ? new Error('networkError') : err;
-    });
-};
+const getRss = (url) => axios.get(proxyRequest(url))
+  .then((response) => response.data)
+  .then((data) => ({ url, rss: parser(data.contents) }))
+  .catch((err) => {
+    throw err.message === 'Network Error' ? new Error('networkError') : err;
+  });
 
 const processRss = (data, state) => {
   const { url, rss } = data;
@@ -99,7 +95,6 @@ const initState = {
     submitted: false,
   },
   feedback: {
-    valid: false,
     message: '',
   },
   uiState: {
@@ -141,7 +136,6 @@ export default () => {
         validate(url, utils.urls, utils)
           .then((validatedUrl) => {
             utils.form.valid = true;
-            utils.feedback.valid = true;
             utils.form.submitted = true;
             return validatedUrl;
           })
@@ -155,7 +149,6 @@ export default () => {
           .catch((err) => {
             const { message } = err;
             utils.process.status = 'failed';
-            utils.feedback.valid = false;
             utils.form.valid = false;
             if (message === 'parseError' || message === 'networkError') {
               utils.feedback.message = i18next.t(`errors.${message}`);

@@ -16,7 +16,7 @@ export default (elements, i18n, initialState) => {
 
   const renderFeedback = (state) => {
     const { feedback } = elements;
-    if (state.feedback.valid) {
+    if (state.form.valid) {
       feedback.classList.remove('text-danger');
       feedback.classList.add('text-success');
     } else {
