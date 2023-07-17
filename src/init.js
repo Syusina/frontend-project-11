@@ -38,18 +38,18 @@ const processPosts = (xml) => {
 };
 
 const proxyRequest = (url) => {
-  const proxyData = new URL('https://allorigins.hexlet.app/get?');
-  proxyData.searchParams.set('disableCache', true);
-  proxyData.searchParams.set('url', url);
-  return proxyData;
+  const request = new URL('https://allorigins.hexlet.app/get?');
+  request.searchParams.set('disableCache', true);
+  request.searchParams.set('url', url);
+  return request.toString();
 };
 
-const getRss = (url) => {
-  const proxyUrl = proxyRequest(url);
+const getRss = (request) => {
+  const url = proxyRequest(request);
   return axios
-    .get(proxyUrl)
+    .get(url)
     .then((response) => response.data)
-    .then((data) => ({ url, rss: parser(data.contents) }))
+    .then((data) => ({ request, rss: parser(data.contents) }))
     .catch((err) => {
       throw err.message === 'Network Error' ? new Error('networkError') : err;
     });
@@ -59,11 +59,9 @@ const processRss = (data, state) => {
   const { url, rss } = data;
   const feed = processFeed(rss);
   const posts = processPosts(rss);
-  state.rssLoaded = true;
   state.urls.push(url);
   state.feeds.push(feed);
   state.posts.push(...posts);
-  state.feedback.message = i18next.t('success');
 };
 
 const updateRss = (state, time) => {
@@ -151,6 +149,8 @@ export default () => {
           .then((data) => {
             processRss(data, utils);
             utils.process.status = 'filling';
+            utils.rssLoaded = true;
+            utils.feedback.message = i18next.t('success');
           })
           .catch((err) => {
             const { message } = err;
