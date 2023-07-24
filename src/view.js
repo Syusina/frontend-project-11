@@ -3,12 +3,12 @@ import onChange from 'on-change';
 export default (elements, i18n, initialState) => {
   const renderForm = (state) => {
     const { form, input } = elements;
-    if (state.form.valid) {
+    if (state.form.isValid) {
       input.classList.remove('is-invalid');
     } else {
       input.classList.add('is-invalid');
     }
-    if (state.form.submitted) {
+    if (state.form.isSubmit) {
       form.reset();
       input.focus();
     }
@@ -16,7 +16,7 @@ export default (elements, i18n, initialState) => {
 
   const renderFeedback = (state) => {
     const { feedback } = elements;
-    if (state.form.valid) {
+    if (state.form.isValid) {
       feedback.classList.remove('text-danger');
       feedback.classList.add('text-success');
     } else {
@@ -116,8 +116,8 @@ export default (elements, i18n, initialState) => {
 
   const watchedState = onChange(initialState, (path) => {
     switch (path) {
-      case 'form.valid':
-      case 'form.submitted':
+      case 'form.isValid':
+      case 'form.isSubmit':
         renderForm(watchedState);
         break;
       case 'feedback.message':

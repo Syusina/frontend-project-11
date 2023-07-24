@@ -87,12 +87,12 @@ const elements = {
 };
 
 const initState = {
-  process: {
+  loadingProcess: {
     status: 'idle',
   },
   form: {
-    valid: true,
-    submitted: false,
+    isValid: true,
+    isSubmit: false,
   },
   feedback: {
     message: '',
@@ -104,7 +104,6 @@ const initState = {
   posts: [],
   feeds: [],
   urls: [],
-  rssLoaded: false,
 };
 
 export default () => {
@@ -129,27 +128,26 @@ export default () => {
       const utils = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        utils.process.status = 'sending';
+        utils.loadingProcess.status = 'sending';
         utils.feedback.message = '';
         const formData = new FormData(e.target);
         const url = formData.get('url');
         validate(url, utils.urls, utils)
           .then((validatedUrl) => {
-            utils.form.valid = true;
-            utils.form.submitted = true;
+            utils.form.isValid = true;
+            utils.form.isSubmit = true;
             return validatedUrl;
           })
           .then((validatedUrl) => getRss(validatedUrl))
           .then((data) => {
             processRss(data, utils);
-            utils.process.status = 'filling';
-            utils.rssLoaded = true;
+            utils.loadingProcess.status = 'filling';
             utils.feedback.message = i18next.t('success');
           })
           .catch((err) => {
             const { message } = err;
-            utils.process.status = 'failed';
-            utils.form.valid = false;
+            utils.loadingProcess.status = 'failed';
+            utils.form.isValid = false;
             if (message === 'parseError' || message === 'networkError') {
               utils.feedback.message = i18next.t(`errors.${message}`);
             } else {
