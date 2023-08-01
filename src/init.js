@@ -1,11 +1,11 @@
 /* eslint-disable no-param-reassign */
+/* eslint-disable no-return-assign */
 import i18next from 'i18next';
 import * as yup from 'yup';
 import axios from 'axios';
-import _ from 'lodash';
 import renderView from './view.js';
 import resources from './locales/index.js';
-import parser from './parser.js';
+import parser, { processFeed, processPosts } from './parser.js';
 
 const validate = (url, urls) => {
   const schema = yup.string()
@@ -14,27 +14,6 @@ const validate = (url, urls) => {
     .notOneOf(urls)
     .required();
   return schema.validate(url, { abortEarly: false });
-};
-
-const processFeed = (xml) => {
-  const feed = xml.querySelector('channel');
-  const title = feed.querySelector('title').textContent;
-  const description = feed.querySelector('description').textContent;
-  return { title, description };
-};
-
-const processPosts = (xml) => {
-  const posts = [...xml.querySelectorAll('item')]
-    .map((item) => {
-      const title = item.querySelector('title').textContent;
-      const description = item.querySelector('description').textContent;
-      const link = item.querySelector('link').textContent;
-      const id = _.uniqueId();
-      return {
-        title, description, link, id,
-      };
-    });
-  return posts;
 };
 
 const proxyRequest = (url) => {
@@ -53,18 +32,18 @@ const getRss = (url) => axios.get(proxyRequest(url))
 
 const processRss = (data, state) => {
   const { url, rss } = data;
-  const feed = processFeed(rss);
+  const newFeed = processFeed(rss);
   const posts = processPosts(rss);
-  state.urls.push(url);
-  state.feeds.push(feed);
+  state.feeds.push(newFeed);
   state.posts.push(...posts);
+  state.feeds.map((feed) => feed.url = url);
 };
 
 const updateRss = (state, time) => {
-  const { urls } = state;
-  const rssLinks = urls.map(getRss);
+  const rssLinks = state.feeds.map((feed) => feed.url);
+  const requests = rssLinks.map((request) => getRss(request));
   const oldPosts = state.posts;
-  Promise.all(rssLinks).then((items) => {
+  Promise.all(requests).then((items) => {
     const newPosts = items.map(({ rss }) => processPosts(rss));
     const uniquePosts = newPosts
       .flat()
@@ -87,12 +66,8 @@ const elements = {
 };
 
 const initState = {
-  loadingProcess: {
+  formProcess: {
     status: 'idle',
-  },
-  form: {
-    isValid: true,
-    isSubmit: false,
   },
   feedback: {
     message: '',
@@ -103,7 +78,6 @@ const initState = {
   },
   posts: [],
   feeds: [],
-  urls: [],
 };
 
 export default () => {
@@ -125,46 +99,45 @@ export default () => {
     resources,
   })
     .then(() => {
-      const utils = renderView(elements, i18next, initState);
+      const watchedState = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        utils.loadingProcess.status = 'sending';
-        utils.feedback.message = '';
+        watchedState.formProcess.status = 'sending';
+        watchedState.feedback.message = '';
         const formData = new FormData(e.target);
         const url = formData.get('url');
-        validate(url, utils.urls, utils)
+        const urls = watchedState.feeds.map((feed) => feed.url);
+        validate(url, urls)
           .then((validatedUrl) => {
-            utils.form.isValid = true;
-            utils.form.isSubmit = true;
+            watchedState.formProcess.status = 'uploaded';
             return validatedUrl;
           })
           .then((validatedUrl) => getRss(validatedUrl))
           .then((data) => {
-            processRss(data, utils);
-            utils.loadingProcess.status = 'filling';
-            utils.feedback.message = i18next.t('success');
+            processRss(data, watchedState);
+            watchedState.formProcess.status = 'success';
+            watchedState.feedback.message = i18next.t('success');
           })
           .catch((err) => {
             const { message } = err;
-            utils.loadingProcess.status = 'failed';
-            utils.form.isValid = false;
+            watchedState.formProcess.status = 'failed';
             if (message === 'parseError' || message === 'networkError') {
-              utils.feedback.message = i18next.t(`errors.${message}`);
+              watchedState.feedback.message = i18next.t(`errors.${message}`);
             } else {
-              utils.feedback.message = message;
+              watchedState.feedback.message = message;
             }
           });
       });
 
       elements.posts.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-          utils.uiState.activeModal = e.target.dataset.id;
-          utils.uiState.viewedPosts.push(e.target.dataset.id);
+          watchedState.uiState.activeModal = e.target.dataset.id;
+          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
         }
         if (e.target.tagName === 'A') {
-          utils.uiState.viewedPosts.push(e.target.dataset.id);
+          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
         }
       });
-      updateRss(utils, delay);
+      updateRss(watchedState, delay);
     });
 };
