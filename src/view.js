@@ -1,21 +1,21 @@
 import onChange from 'on-change';
 
 const renderForm = (state, elements) => {
-  const { form, input } = elements;
+  const { input } = elements;
   if (!state.formProcess.status === 'uploaded') {
     input.classList.add('is-invalid');
   } else {
     input.classList.remove('is-invalid');
-    form.reset();
-    input.focus();
   }
 };
 
 const renderFeedback = (state, elements) => {
-  const { feedback } = elements;
+  const { feedback, form, input } = elements;
   if (state.formProcess.status === 'success') {
     feedback.classList.remove('text-danger');
     feedback.classList.add('text-success');
+    form.reset();
+    input.focus();
   } else {
     feedback.classList.remove('text-success');
     feedback.classList.add('text-danger');

@@ -27,7 +27,7 @@ const getRss = (url) => axios.get(proxyRequest(url))
   .then((response) => response.data)
   .then((data) => ({ url, rss: parser(data.contents) }))
   .catch((err) => {
-    throw err.message === 'Network Error' ? new Error('networkError') : err;
+    throw err.message === 'Network Error' ? new Error('networkError') : new Error('parseError');
   });
 
 const processRss = (data, state) => {
