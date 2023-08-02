@@ -99,45 +99,45 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = renderView(elements, i18next, initState);
+      const view = renderView(elements, i18next, initState);
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        watchedState.formProcess.status = 'sending';
-        watchedState.feedback.message = '';
+        view.formProcess.status = 'sending';
+        view.feedback.message = '';
         const formData = new FormData(e.target);
         const url = formData.get('url');
-        const urls = watchedState.feeds.map((feed) => feed.url);
+        const urls = view.feeds.map((feed) => feed.url);
         validate(url, urls)
           .then((validatedUrl) => {
-            watchedState.formProcess.status = 'uploaded';
+            view.formProcess.status = 'uploaded';
             return validatedUrl;
           })
           .then((validatedUrl) => getRss(validatedUrl))
           .then((data) => {
-            processRss(data, watchedState);
-            watchedState.formProcess.status = 'success';
-            watchedState.feedback.message = i18next.t('success');
+            processRss(data, view);
+            view.formProcess.status = 'success';
+            view.feedback.message = i18next.t('success');
           })
           .catch((err) => {
             const { message } = err;
-            watchedState.formProcess.status = 'failed';
+            view.formProcess.status = 'failed';
             if (message === 'parseError' || message === 'networkError') {
-              watchedState.feedback.message = i18next.t(`errors.${message}`);
+              view.feedback.message = i18next.t(`errors.${message}`);
             } else {
-              watchedState.feedback.message = message;
+              view.feedback.message = message;
             }
           });
       });
 
       elements.posts.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
-          watchedState.uiState.activeModal = e.target.dataset.id;
-          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
+          view.uiState.activeModal = e.target.dataset.id;
+          view.uiState.viewedPosts.push(e.target.dataset.id);
         }
         if (e.target.tagName === 'A') {
-          watchedState.uiState.viewedPosts.push(e.target.dataset.id);
+          view.uiState.viewedPosts.push(e.target.dataset.id);
         }
       });
-      updateRss(watchedState, delay);
+      updateRss(view, delay);
     });
 };
