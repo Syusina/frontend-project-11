@@ -7,6 +7,7 @@ export default {
       invalidUrl: 'Ссылка должна быть валидным URL',
       parseError: 'Ресурс не содержит валидный RSS',
       networkError: 'Ошибка сети',
+      unknown: 'Неизвестная ошибка',
     },
     view: 'Просмотр',
     posts: 'Посты',

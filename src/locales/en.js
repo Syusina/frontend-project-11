@@ -7,6 +7,7 @@ export default {
       invalidUrl: 'Must be a valid URL',
       parseError: 'Source contains invalid RSS',
       networkError: 'Network error',
+      unknown: 'Unknown error',
     },
     view: 'View',
     posts: 'Posts',
