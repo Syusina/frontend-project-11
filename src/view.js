@@ -9,13 +9,22 @@ const renderForm = (state, elements) => {
   }
 };
 
+const hideBtn = (state, elements) => {
+  const { submit } = elements;
+  if (state.formProcess.status === 'sending') {
+    submit.setAttribute('disabled', '');
+  } else {
+    submit.removeAttribute('disabled');
+  }
+};
+
 const renderFeedback = (state, elements) => {
   const { feedback, form, input } = elements;
   if (state.formProcess.status === 'success') {
-    feedback.classList.remove('text-danger');
-    feedback.classList.add('text-success');
     form.reset();
     input.focus();
+    feedback.classList.remove('text-danger');
+    feedback.classList.add('text-success');
   } else {
     feedback.classList.remove('text-success');
     feedback.classList.add('text-danger');
@@ -28,15 +37,14 @@ const renderFeeds = (state) => {
   state.feeds.forEach((feed) => {
     const item = document.createElement('li');
     item.classList.add('list-group-item', 'border-0', 'border-end-0');
-    listGroup.appendChild(item);
     const itemTitle = document.createElement('h3');
     itemTitle.classList.add('h6', 'm-0');
     itemTitle.textContent = feed.title;
-    item.appendChild(itemTitle);
     const itemDesc = document.createElement('p');
     itemDesc.classList.add('m-0', 'small-text-black-50');
     itemDesc.textContent = feed.description;
-    item.appendChild(itemDesc);
+    item.append(itemTitle, itemDesc);
+    listGroup.append(item);
   });
 };
 
@@ -121,6 +129,9 @@ const renderContainer = (state, type, i18n) => {
 const renderView = (elements, i18n, initialState) => {
   const watchedState = onChange(initialState, (path) => {
     switch (path) {
+      case 'formProcess.status':
+        hideBtn(watchedState, elements);
+        break;
       case 'formProcess':
         renderForm(watchedState, elements);
         break;
